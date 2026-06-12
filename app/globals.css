@@ -1,0 +1,233 @@
+@import "tailwindcss";
+
+/* Class-based dark mode — ThemeToggle manages .dark on <html> */
+@variant dark (&:where(.dark, .dark *));
+
+/* ── LIGHT THEME ─────────────────────────────────────────────────────────── */
+@theme {
+  /* Backgrounds */
+  --color-background:      hsl(220 20% 97%);
+  --color-card:            hsl(0 0% 100%);
+  --color-popover:         hsl(0 0% 100%);
+
+  /* Text */
+  --color-foreground:      hsl(224 40% 10%);
+  --color-card-foreground: hsl(224 40% 10%);
+  --color-popover-foreground: hsl(224 40% 10%);
+  --color-muted-foreground: hsl(220 14% 50%);
+
+  /* Brand: deep green */
+  --color-primary:          hsl(152 60% 22%);
+  --color-primary-foreground: hsl(0 0% 100%);
+
+  /* Secondary / muted surfaces */
+  --color-secondary:        hsl(220 20% 94%);
+  --color-secondary-foreground: hsl(224 40% 15%);
+  --color-muted:            hsl(220 20% 94%);
+  --color-accent:           hsl(220 20% 91%);
+  --color-accent-foreground: hsl(224 40% 12%);
+
+  /* Danger */
+  --color-destructive:      hsl(0 72% 51%);
+  --color-destructive-foreground: hsl(0 0% 100%);
+
+  /* Borders / inputs */
+  --color-border: hsl(220 14% 88%);
+  --color-input:  hsl(220 14% 88%);
+  --color-ring:   hsl(152 60% 30%);
+
+  --radius: 0.6rem;
+}
+
+/* ── DARK THEME (applied via .dark class by ThemeToggle) ─────────────────── */
+.dark {
+  --color-background:      hsl(224 30% 8%);
+  --color-card:            hsl(224 28% 12%);
+  --color-popover:         hsl(224 28% 12%);
+
+  --color-foreground:      hsl(220 20% 93%);
+  --color-card-foreground: hsl(220 20% 93%);
+  --color-popover-foreground: hsl(220 20% 93%);
+  --color-muted-foreground: hsl(220 14% 55%);
+
+  --color-primary:          hsl(152 55% 45%);
+  --color-primary-foreground: hsl(224 40% 8%);
+
+  --color-secondary:        hsl(224 25% 17%);
+  --color-secondary-foreground: hsl(220 20% 88%);
+  --color-muted:            hsl(224 25% 17%);
+  --color-accent:           hsl(224 25% 20%);
+  --color-accent-foreground: hsl(220 20% 90%);
+
+  --color-destructive:      hsl(0 62% 42%);
+  --color-destructive-foreground: hsl(0 0% 98%);
+
+  --color-border: hsl(224 20% 20%);
+  --color-input:  hsl(224 20% 20%);
+  --color-ring:   hsl(152 55% 40%);
+}
+
+/* ── BASE ────────────────────────────────────────────────────────────────── */
+@layer base {
+  *, *::before, *::after {
+    border-color: var(--color-border);
+    box-sizing: border-box;
+  }
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-size: 15px;
+    line-height: 1.6;
+    transition: background-color 0.2s ease, color 0.15s ease;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  ::selection {
+    background-color: hsl(152 55% 45% / 0.25);
+  }
+}
+
+/* ── COMPONENTS ──────────────────────────────────────────────────────────── */
+@layer components {
+
+  /* ── Header ── */
+  header {
+    background: var(--color-card);
+    border-bottom: 1px solid var(--color-border);
+    box-shadow: 0 1px 0 0 var(--color-border), 0 2px 8px 0 rgb(0 0 0 / 0.04);
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+  .dark header {
+    box-shadow: 0 1px 0 0 var(--color-border), 0 2px 12px 0 rgb(0 0 0 / 0.3);
+  }
+
+  /* ── Cards ── */
+  [data-slot="card"], .card {
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+    transition: background-color 0.2s ease, border-color 0.2s ease,
+                box-shadow 0.15s ease;
+  }
+  [data-slot="card"]:hover, .card:hover {
+    box-shadow: 0 4px 12px 0 rgb(0 0 0 / 0.08), 0 2px 4px -1px rgb(0 0 0 / 0.05);
+  }
+  .dark [data-slot="card"], .dark .card {
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3);
+  }
+  .dark [data-slot="card"]:hover, .dark .card:hover {
+    box-shadow: 0 4px 12px 0 rgb(0 0 0 / 0.4);
+  }
+
+  /* ── Tables ── */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  table thead {
+    background: var(--color-muted);
+  }
+  table thead th {
+    font-weight: 600;
+    font-size: 0.75rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--color-muted-foreground);
+    padding: 0.6rem 1rem;
+  }
+  table tbody tr {
+    transition: background-color 0.1s ease;
+    border-bottom: 1px solid var(--color-border);
+  }
+  table tbody tr:last-child {
+    border-bottom: none;
+  }
+  table tbody tr:hover {
+    background-color: var(--color-accent);
+  }
+  table tbody td {
+    padding: 0.65rem 1rem;
+  }
+
+  /* ── Badges ── */
+  [data-slot="badge"] {
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    font-size: 0.7rem;
+  }
+
+  /* ── Buttons ── */
+  button, [role="button"] {
+    transition: background-color 0.12s ease, color 0.12s ease,
+                border-color 0.12s ease, box-shadow 0.12s ease;
+  }
+
+  /* ── Nav links ── */
+  nav a {
+    border-radius: 0.4rem;
+    transition: background-color 0.12s ease, color 0.12s ease;
+  }
+  nav a:hover {
+    background-color: var(--color-accent);
+    color: var(--color-accent-foreground);
+  }
+
+  /* ── Inputs ── */
+  input, textarea, select {
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    color: var(--color-foreground);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--color-ring);
+    box-shadow: 0 0 0 3px hsl(152 55% 40% / 0.15);
+    outline: none;
+  }
+
+  /* ── Section headings ── */
+  h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.25; }
+  h2 { font-size: 1.2rem; font-weight: 600; letter-spacing: -0.01em; }
+
+  /* ── Dashboard ranking row highlight (current user) ── */
+  .ranking-me {
+    background: linear-gradient(90deg, hsl(152 55% 40% / 0.06) 0%, transparent 100%);
+    border-left: 3px solid hsl(152 55% 40% / 0.7);
+  }
+  .dark .ranking-me {
+    background: linear-gradient(90deg, hsl(152 55% 45% / 0.1) 0%, transparent 100%);
+    border-left: 3px solid hsl(152 55% 45% / 0.6);
+  }
+
+  /* ── Live badge pulse ── */
+  @keyframes live-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.55; }
+  }
+  .animate-pulse { animation: live-pulse 1.5s ease-in-out infinite; }
+
+  /* ── Match card status strip ── */
+  .match-live {
+    border-color: hsl(0 72% 51% / 0.5) !important;
+    box-shadow: 0 0 0 1px hsl(0 72% 51% / 0.2);
+  }
+
+  /* ── Scrollbar (webkit) ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-muted-foreground); }
+}

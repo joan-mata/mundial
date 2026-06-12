@@ -1,0 +1,44 @@
+services:
+  mundial-app:
+    build: .
+    container_name: mundial
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - VIRTUAL_HOST=mundial.joanmata.com
+      - LETSENCRYPT_HOST=mundial.joanmata.com
+      - LETSENCRYPT_EMAIL=joan.mata.jmp@gmail.com
+    networks:
+      - proxy-net
+      - mundial-internal
+    depends_on:
+      mundial-db:
+        condition: service_healthy
+
+  mundial-db:
+    image: postgres:16-alpine
+    container_name: mundial-db
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_DB: mundial
+      POSTGRES_USER: mundial
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mundial_db_data:/var/lib/postgresql/data
+    networks:
+      - mundial-internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mundial"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  proxy-net:
+    external: true
+  mundial-internal:
+    driver: bridge
+
+volumes:
+  mundial_db_data:
