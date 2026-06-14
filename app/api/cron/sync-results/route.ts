@@ -5,7 +5,42 @@ import { resolveMatch } from '@/lib/recalculate';
 import { NextResponse } from 'next/server';
 import type { KnockoutMethod } from '@prisma/client';
 import { checkCronSecret } from '@/lib/cron-auth';
+import { revalidatePath } from 'next/cache';
+import { notifyMatchFinished } from '@/lib/telegram';
 
+
+async function sendMatchNotifications(matchId: string) {
+  const m = await db.match.findUnique({
+    where: { id: matchId },
+    include: {
+      predictions: {
+        include: { user: { select: { id: true, telegramChatId: true, telegramToken: true } } },
+      },
+    },
+  });
+  if (!m || m.homeScore === null || m.awayScore === null) return;
+
+  const homeName = m.homeTeamId ?? m.homeLabel ?? 'Local';
+  const awayName = m.awayTeamId ?? m.awayLabel ?? 'Visitante';
+
+  for (const pred of m.predictions) {
+    if (!pred.user.telegramChatId || !pred.user.telegramToken || pred.points === null) continue;
+    const agg = await db.prediction.aggregate({
+      where: { userId: pred.user.id, points: { not: null } },
+      _sum: { points: true },
+    });
+    await notifyMatchFinished(pred.user.telegramChatId, pred.user.telegramToken, {
+      homeTeam:      homeName,
+      awayTeam:      awayName,
+      homeScore:     m.homeScore,
+      awayScore:     m.awayScore,
+      predHomeScore: pred.homeScore,
+      predAwayScore: pred.awayScore,
+      pointsEarned:  pred.points,
+      totalPoints:   agg._sum.points ?? 0,
+    }).catch(e => console.error('[sync-results] telegram notify:', e));
+  }
+}
 
 export async function POST(req: Request) {
   if (!checkCronSecret(req)) {
@@ -38,6 +73,7 @@ export async function POST(req: Request) {
     if (match.status === 'FINISHED' && match.homeScore !== null && match.awayScore !== null && !match.resolved) {
       try {
         await resolveMatch(match.id);
+        await sendMatchNotifications(match.id);
         resolved++;
       } catch (e) {
         console.error(`[sync-results] resolve fast-path ${match.id}:`, e);
@@ -124,11 +160,22 @@ export async function POST(req: Request) {
 
       if (newStatus === 'FINISHED' && homeScore !== null && awayScore !== null && !match.resolved) {
         await resolveMatch(match.id);
+        await sendMatchNotifications(match.id);
         resolved++;
+        revalidatePath('/dashboard');
       }
     } catch (e) {
       console.error(`[sync-results] match ${match.id}:`, e);
     }
+  }
+
+  // After resolving matches, trigger sync-events for remaining live/pending matches
+  if (resolved > 0) {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+    fetch(`${appUrl}/api/cron/sync-events`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${process.env.CRON_SECRET}` },
+    }).catch(e => console.error('[sync-results] trigger sync-events:', e));
   }
 
   return NextResponse.json({ ok: true, checked: matches.length, resolved });

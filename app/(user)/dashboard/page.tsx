@@ -1,10 +1,12 @@
 import { db } from '@/lib/db';
 import { auth } from '@/lib/auth';
+import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ExtraReminderModal } from '@/components/extra-reminder-modal';
+import { FavoriteTeamModal } from '@/components/favorite-team-modal';
 
-export const revalidate = 30;
+export const revalidate = 3600;
 
 const BET_LABELS: Record<string, string> = {
   WORLD_CUP_WINNER: 'Campeón del Mundial',
@@ -57,15 +59,24 @@ export default async function DashboardPage() {
     const koBonusPts = u.predictions.reduce((s, p) => s + (p.knockoutPoints ?? 0), 0);
     const closestPts = u.predictions.reduce((s, p) => s + (p.closestBonus ?? 0), 0);
     const pending    = u.predictions.filter(p => p.points === null).length;
-    return { ...u, total, predPts, extraPts, exact, winner, koBonusPts, closestPts, pending };
-  }).sort((a, b) => b.total - a.total);
+    const predCount  = u.predictions.length;
+    return { ...u, total, predPts, extraPts, exact, winner, koBonusPts, closestPts, pending, predCount };
+  }).sort((a, b) =>
+    b.total      - a.total      ||
+    b.exact      - a.exact      ||
+    b.winner     - a.winner     ||
+    b.closestPts - a.closestPts ||
+    b.koBonusPts - a.koBonusPts ||
+    b.extraPts   - a.extraPts   ||
+    b.predCount  - a.predCount
+  );
 
   return (
     <div className="space-y-6">
       {!isAdmin && <ExtraReminderModal pendingLabels={pendingLabels} />}
+      {!isAdmin && !rows.find(r => r.id === userId)?.favoriteTeam && <FavoriteTeamModal />}
       <div>
         <h1 className="text-2xl font-bold">Clasificación</h1>
-        <p className="text-muted-foreground text-sm mt-1">Se actualiza cada 30 segundos</p>
       </div>
 
       {/* ── Mobile list ────────────────────────────────── */}
@@ -86,7 +97,7 @@ export default async function DashboardPage() {
               </span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <span className={`truncate text-sm ${isMe ? 'font-semibold' : 'font-medium'}`}>{u.name}</span>
+                  <Link href={`/dashboard/${u.id}`} className={`truncate text-sm hover:underline ${isMe ? 'font-semibold' : 'font-medium'}`}>{u.name}</Link>
                   {u.favoriteTeam && <span className="shrink-0 text-sm">{u.favoriteTeam}</span>}
                   {isMe && <Badge variant="secondary" className="text-[10px] shrink-0 py-0">Tú</Badge>}
                 </div>
@@ -118,6 +129,7 @@ export default async function DashboardPage() {
               <th className="px-4 py-3 text-right hidden md:table-cell">Más cerca</th>
               <th className="px-4 py-3 text-right hidden md:table-cell">Extras</th>
               <th className="px-4 py-3 text-right hidden lg:table-cell">Pendientes</th>
+              <th className="px-4 py-3 text-right hidden lg:table-cell">Predicciones</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -130,7 +142,7 @@ export default async function DashboardPage() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      {u.name}
+                      <Link href={`/dashboard/${u.id}`} className="hover:underline">{u.name}</Link>
                       {u.favoriteTeam && <span className="text-base">{u.favoriteTeam}</span>}
                       {isMe && <Badge variant="secondary" className="text-xs">Tú</Badge>}
                     </div>
@@ -142,6 +154,7 @@ export default async function DashboardPage() {
                   <td className="px-4 py-3 text-right hidden md:table-cell text-orange-500">{u.closestPts > 0 ? `+${u.closestPts}` : '-'}</td>
                   <td className="px-4 py-3 text-right hidden md:table-cell text-purple-600">{u.extraPts > 0 ? `+${u.extraPts}` : '-'}</td>
                   <td className="px-4 py-3 text-right hidden lg:table-cell text-muted-foreground">{u.pending}</td>
+                  <td className="px-4 py-3 text-right hidden lg:table-cell text-muted-foreground">{u.predCount}</td>
                 </tr>
               );
             })}

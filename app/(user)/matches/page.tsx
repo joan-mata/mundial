@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { formatKickoff, stageLabel } from '@/lib/utils';
 import { pixelBackground } from '@/lib/flag-colors';
 import { ScrollToToday } from '@/components/scroll-to-today';
+import { LiveMinute } from '@/components/live-minute';
 
 export const revalidate = 60;
 
@@ -78,7 +79,10 @@ export default async function MatchesPage() {
                           {match.group && ` · G.${match.group.replace(/^GROUP_/, '')}`}
                         </span>
                         {isLive
-                          ? <Badge variant="destructive" className="text-[10px] py-0 px-1.5 animate-pulse">EN VIVO</Badge>
+                          ? <div className="flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shrink-0" />
+                              <LiveMinute kickoff={match.kickoff} />
+                            </div>
                           : <span className="tabular-nums text-sm font-bold text-foreground">
                               {match.kickoff.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Madrid' })}h
                             </span>

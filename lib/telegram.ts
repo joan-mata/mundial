@@ -81,6 +81,39 @@ export async function sendMorningSummary(
   await makeBot(token).sendMessage(chatId, text, { parse_mode: 'Markdown' });
 }
 
+export async function announceMatchKickoff(
+  chatId: string,
+  token: string,
+  { homeTeam, awayTeam, homeFlag, awayFlag }: { homeTeam: string; awayTeam: string; homeFlag: string; awayFlag: string }
+): Promise<void> {
+  await makeBot(token).sendMessage(
+    chatId,
+    `⚽ Empieza ahora: *${homeFlag} ${homeTeam} vs ${awayTeam} ${awayFlag}*\n\nhttps://mundial.joanmata.com/matches`,
+    { parse_mode: 'Markdown' }
+  );
+}
+
+export type MatchFinishedNotif = {
+  homeTeam: string;
+  awayTeam: string;
+  homeScore: number;
+  awayScore: number;
+  predHomeScore: number;
+  predAwayScore: number;
+  pointsEarned: number;
+  totalPoints: number;
+};
+
+export async function notifyMatchFinished(chatId: string, token: string, n: MatchFinishedNotif): Promise<void> {
+  const earned = n.pointsEarned > 0 ? `+${n.pointsEarned} pts` : 'sin puntos';
+  const icon   = n.pointsEarned >= 3 ? '🟢' : n.pointsEarned >= 1 ? '🟡' : '🔴';
+  await makeBot(token).sendMessage(
+    chatId,
+    `${icon} *${n.homeTeam} ${n.homeScore}–${n.awayScore} ${n.awayTeam}*\n_Tu predicción: ${n.predHomeScore}–${n.predAwayScore}_ → *${earned}*\nTotal acumulado: *${n.totalPoints} pts*`,
+    { parse_mode: 'Markdown' }
+  );
+}
+
 export async function sendWelcomeMessage(chatId: string, token: string, name: string): Promise<void> {
   await makeBot(token).sendMessage(
     chatId,

@@ -64,8 +64,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, skipped: true, nextIn: Math.round((lastSync + intervalMin * 60 * 1000 - now) / 1000) + 's' });
   }
 
-  const threeHoursAgo = new Date(now - 3 * 60 * 60 * 1000);
-
   const matches = await db.match.findMany({
     where: {
       apifootballId:       { not: null },
@@ -73,7 +71,6 @@ export async function POST(req: Request) {
       OR: [
         { status: 'LIVE' },
         { status: 'FINISHED', events: { equals: Prisma.DbNull } },
-        { status: 'FINISHED', kickoff: { gte: threeHoursAgo } },
       ],
     },
     select: {

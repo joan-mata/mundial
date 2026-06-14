@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MobileNav } from '@/components/mobile-nav';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { TelegramPrompt } from '@/components/telegram-prompt';
+import { IdleGuard } from '@/components/idle-guard';
+import { db } from '@/lib/db';
 
 export default async function UserLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -13,6 +16,11 @@ export default async function UserLayout({ children }: { children: React.ReactNo
 
   const isAdmin = session.user.role === 'ADMIN';
   const firstName = session.user.name.split(' ')[0];
+
+  const hasTelegram = !isAdmin && await db.user.findUnique({
+    where: { id: session.user.id },
+    select: { telegramChatId: true },
+  }).then(u => !!u?.telegramChatId);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -71,6 +79,8 @@ export default async function UserLayout({ children }: { children: React.ReactNo
         </div>
       </header>
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-6">
+        <IdleGuard />
+        {!hasTelegram && <TelegramPrompt userId={session.user.id} />}
         {children}
       </main>
     </div>

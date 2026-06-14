@@ -60,12 +60,17 @@ export function EditUserForm({ user }: Props) {
           <div className="space-y-1">
             <Label className="text-xs">Telegram Chat ID</Label>
             <Input value={chatId} onChange={e => setChatId(e.target.value)} placeholder="123456789" />
+            <p className="text-xs text-muted-foreground">
+              El usuario escribe <strong>/start</strong> al bot → el bot responde con su Chat ID.
+            </p>
           </div>
         </div>
         <div className="space-y-1">
           <Label className="text-xs">Telegram Bot Token</Label>
           <Input value={tgToken} onChange={e => setTgToken(e.target.value)} placeholder={user.hasTelegramToken ? '(configurado — deja vacío para no cambiar)' : '1234567890:ABCdefGhIJKlmNoPQRsTUVwxyZ'} type="password" />
-          <p className="text-xs text-muted-foreground">Token del bot propio del usuario (creado con @BotFather)</p>
+          <p className="text-xs text-muted-foreground">
+            Token del bot creado con <strong>@BotFather</strong> en Telegram → <em>/newbot</em> → copia el token.
+          </p>
         </div>
         <Button size="sm" onClick={() => patch({ name, telegramChatId: chatId || null, ...(tgToken ? { telegramToken: tgToken } : {}) }, '✅ Usuario actualizado')} disabled={loading}>
           Guardar cambios

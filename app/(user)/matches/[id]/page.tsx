@@ -5,6 +5,7 @@ import { effectiveDeadline } from '@/lib/deadline';
 import { formatKickoff, stageLabel, methodLabel } from '@/lib/utils';
 import { PredictionForm } from '@/components/prediction-form';
 import { LiveRefresher } from '@/components/live-refresher';
+import { LiveMinute } from '@/components/live-minute';
 import { MatchEvents } from '@/components/match-events';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -78,9 +79,10 @@ export default async function MatchPage({ params }: { params: Promise<{ id: stri
           {match.group && <span>· Grupo {match.group.replace(/^GROUP_/, '')}</span>}
           {match.venueCity && <span>· {match.venueCity}</span>}
           {match.status === 'LIVE' && (
-            <span className="flex items-center gap-1 text-red-500 font-semibold uppercase tracking-wide">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+            <span className="flex items-center gap-1.5 text-red-500 font-semibold uppercase tracking-wide">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
               En vivo
+              <LiveMinute kickoff={match.kickoff} />
             </span>
           )}
         </div>
