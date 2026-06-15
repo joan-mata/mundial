@@ -29,10 +29,11 @@ type GroupStandings = Map<string, StandingRow[]>;
 
 function projectedTeam(label: string | null, standings: GroupStandings): StandingRow | null {
   if (!label) return null;
+  if (label.length > 2) return null; // "3ABCDF" — multi-group 3rd slot, indeterminable until groups finish
   const pos   = parseInt(label[0], 10) - 1;
   const group = label[1];
   if (!group) return null;
-  return standings.get(group)?.[pos] ?? null;
+  return standings.get(group)?.[pos] ?? standings.get(`GROUP_${group}`)?.[pos] ?? null;
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────────
@@ -241,8 +242,9 @@ export default async function CuadroPage({ searchParams }: { searchParams: Promi
   const standings: GroupStandings = new Map();
   for (const t of teams) {
     getRow(t.id);
-    if (!standings.has(t.group)) standings.set(t.group, []);
-    standings.get(t.group)!.push(rowMap.get(t.id)!);
+    const groupKey = t.group.replace(/^GROUP_/, '');
+    if (!standings.has(groupKey)) standings.set(groupKey, []);
+    standings.get(groupKey)!.push(rowMap.get(t.id)!);
   }
   for (const [, rows] of standings) rows.sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf);
 

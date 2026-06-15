@@ -5,8 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ExtraReminderModal } from '@/components/extra-reminder-modal';
 import { FavoriteTeamModal } from '@/components/favorite-team-modal';
+import { LeaderboardTable } from '@/components/leaderboard-table';
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 const BET_LABELS: Record<string, string> = {
   WORLD_CUP_WINNER: 'Campeón del Mundial',
@@ -91,13 +92,13 @@ export default async function DashboardPage() {
             u.extraPts > 0 && <span key="x" className="text-purple-600">+{u.extraPts} extra</span>,
           ].filter(Boolean);
           return (
-            <div key={u.id} className={`flex items-center gap-3 px-3 py-2.5 ${isMe ? 'bg-primary/5' : ''}`}>
+            <Link key={u.id} href={`/dashboard/${u.id}`} className={`flex items-center gap-3 px-3 py-2.5 hover:bg-accent/50 transition-colors ${isMe ? 'bg-primary/5' : ''}`}>
               <span className="shrink-0 w-7 text-center text-base leading-none">
                 {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : <span className="text-sm text-muted-foreground">{i + 1}</span>}
               </span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <Link href={`/dashboard/${u.id}`} className={`truncate text-sm hover:underline ${isMe ? 'font-semibold' : 'font-medium'}`}>{u.name}</Link>
+                  <span className={`truncate text-sm ${isMe ? 'font-semibold' : 'font-medium'}`}>{u.name}</span>
                   {u.favoriteTeam && <span className="shrink-0 text-sm">{u.favoriteTeam}</span>}
                   {isMe && <Badge variant="secondary" className="text-[10px] shrink-0 py-0">Tú</Badge>}
                 </div>
@@ -110,57 +111,21 @@ export default async function DashboardPage() {
                 )}
               </div>
               <span className={`shrink-0 text-2xl font-bold tabular-nums ${isMe ? 'text-primary' : ''}`}>{u.total}</span>
-            </div>
+            </Link>
           );
         })}
       </div>
 
       {/* ── Desktop table ───────────────────────────────── */}
-      <div className="hidden sm:block overflow-x-auto rounded-lg border">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50">
-            <tr>
-              <th className="px-4 py-3 text-left">#</th>
-              <th className="px-4 py-3 text-left">Jugador</th>
-              <th className="px-4 py-3 text-right font-bold">Pts</th>
-              <th className="px-4 py-3 text-right hidden sm:table-cell">Exactos</th>
-              <th className="px-4 py-3 text-right hidden sm:table-cell">Ganador</th>
-              <th className="px-4 py-3 text-right hidden md:table-cell" title="Acierta quién pasa de ronda (+1), método prórroga (+1), marcador ET exacto (+3)">Bonus KO</th>
-              <th className="px-4 py-3 text-right hidden md:table-cell">Más cerca</th>
-              <th className="px-4 py-3 text-right hidden md:table-cell">Extras</th>
-              <th className="px-4 py-3 text-right hidden lg:table-cell">Pendientes</th>
-              <th className="px-4 py-3 text-right hidden lg:table-cell">Predicciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {rows.map((u, i) => {
-              const isMe = u.id === userId;
-              return (
-                <tr key={u.id} className={isMe ? 'ranking-me font-medium' : 'hover:bg-accent/50 transition-colors'}>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <Link href={`/dashboard/${u.id}`} className="hover:underline">{u.name}</Link>
-                      {u.favoriteTeam && <span className="text-base">{u.favoriteTeam}</span>}
-                      {isMe && <Badge variant="secondary" className="text-xs">Tú</Badge>}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-right font-bold text-lg">{u.total}</td>
-                  <td className="px-4 py-3 text-right hidden sm:table-cell text-green-600">{u.exact}</td>
-                  <td className="px-4 py-3 text-right hidden sm:table-cell text-yellow-600">{u.winner}</td>
-                  <td className="px-4 py-3 text-right hidden md:table-cell text-blue-600">{u.koBonusPts > 0 ? `+${u.koBonusPts}` : '-'}</td>
-                  <td className="px-4 py-3 text-right hidden md:table-cell text-orange-500">{u.closestPts > 0 ? `+${u.closestPts}` : '-'}</td>
-                  <td className="px-4 py-3 text-right hidden md:table-cell text-purple-600">{u.extraPts > 0 ? `+${u.extraPts}` : '-'}</td>
-                  <td className="px-4 py-3 text-right hidden lg:table-cell text-muted-foreground">{u.pending}</td>
-                  <td className="px-4 py-3 text-right hidden lg:table-cell text-muted-foreground">{u.predCount}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      <LeaderboardTable
+        rows={rows.map(u => ({
+          id: u.id, name: u.name, favoriteTeam: u.favoriteTeam ?? null,
+          total: u.total, exact: u.exact, winner: u.winner,
+          koBonusPts: u.koBonusPts, closestPts: u.closestPts,
+          extraPts: u.extraPts, pending: u.pending, predCount: u.predCount,
+        }))}
+        userId={userId}
+      />
 
       <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
         <span><span className="text-green-600 font-medium">Exactos</span> = 3 pts</span>

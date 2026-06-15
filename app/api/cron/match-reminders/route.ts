@@ -11,14 +11,13 @@ export async function POST(req: Request) {
   }
 
   const now    = new Date();
-  const in75   = new Date(now.getTime() + 75 * 60 * 1000);
+  const in65   = new Date(now.getTime() + 65 * 60 * 1000);
 
-  // Partidos SCHEDULED o LIVE cuyo kickoff está en los próximos 75 min
-  // LIVE se incluye porque sync-results puede actualizar el status antes que este cron
+  // Cubre ventana 1h-antes y ventana kickoff
   const upcomingMatches = await db.match.findMany({
     where: {
       status:     { in: ['SCHEDULED', 'LIVE'] },
-      kickoff:    { gte: now, lte: in75 },
+      kickoff:    { gte: new Date(now.getTime() - 5 * 60 * 1000), lte: in65 },
       homeTeamId: { not: null },
       awayTeamId: { not: null },
     },
@@ -53,10 +52,10 @@ export async function POST(req: Request) {
   for (const match of upcomingMatches) {
     const minutesLeft = Math.round((match.kickoff.getTime() - now.getTime()) / 60000);
 
-    // Ventana "1h antes": 55-65 min
-    const isOneHour = minutesLeft >= 55 && minutesLeft <= 65;
-    // Ventana "inicio": 0-5 min
-    const isKickoff = minutesLeft >= 0 && minutesLeft <= 5;
+    // Ventana ~1h: 57-61 min (4 min < cron de 5 min → dispara una sola vez)
+    const isOneHour = minutesLeft >= 57 && minutesLeft <= 61;
+    // Ventana kickoff: 0-4 min
+    const isKickoff = minutesLeft >= 0 && minutesLeft <= 4;
 
     if (!isOneHour && !isKickoff) continue;
 
@@ -70,20 +69,18 @@ export async function POST(req: Request) {
     for (const user of users) {
       const hasPred = predSet.has(`${user.id}:${match.id}`);
 
-      if (isKickoff) {
-        // Announce kickoff to ALL users
-        await announceMatchKickoff(user.telegramChatId!, user.telegramToken!, {
-          homeTeam: homeName, awayTeam: awayName, homeFlag, awayFlag,
-        }).catch(e => console.error('[match-reminders] announce:', e));
-        sent++;
-      } else if (isOneHour && !hasPred) {
-        // Remind only users who haven't predicted yet
+      if (isOneHour && !hasPred) {
         await remindBeforeKickoff(user.telegramChatId!, user.telegramToken!, {
           homeTeam:    homeName,
           awayTeam:    awayName,
           minutesLeft: minutesLeft,
           kickoff:     match.kickoff,
         }).catch(e => console.error('[match-reminders] remind:', e));
+        sent++;
+      } else if (isKickoff && hasPred) {
+        await announceMatchKickoff(user.telegramChatId!, user.telegramToken!, {
+          homeTeam: homeName, awayTeam: awayName, homeFlag, awayFlag,
+        }).catch(e => console.error('[match-reminders] kickoff:', e));
         sent++;
       }
     }

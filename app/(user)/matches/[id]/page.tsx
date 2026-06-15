@@ -126,7 +126,7 @@ export default async function MatchPage({ params }: { params: Promise<{ id: stri
         </Card>
       )}
 
-      {(match.status === 'LIVE' || hasResult) && Array.isArray(match.events) && (
+      {(match.status === 'LIVE' || hasResult) && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
@@ -138,7 +138,7 @@ export default async function MatchPage({ params }: { params: Promise<{ id: stri
           </CardHeader>
           <CardContent>
             <MatchEvents
-              events={match.events as MatchEvent[]}
+              events={Array.isArray(match.events) ? match.events as MatchEvent[] : []}
               homeTeamId={match.homeTeamId}
               awayTeamId={match.awayTeamId}
             />
