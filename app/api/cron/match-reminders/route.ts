@@ -66,6 +66,15 @@ export async function POST(req: Request) {
     const homeFlag = homeTeam?.flag ?? '';
     const awayFlag = awayTeam?.flag ?? '';
 
+    if (isKickoff) {
+      // Actualización atómica: solo procede si kickoffNotifiedAt sigue siendo null
+      const updated = await db.match.updateMany({
+        where: { id: match.id, kickoffNotifiedAt: null },
+        data:  { kickoffNotifiedAt: now },
+      });
+      if (updated.count === 0) continue; // ya notificado por otra ejecución
+    }
+
     for (const user of users) {
       const hasPred = predSet.has(`${user.id}:${match.id}`);
 
